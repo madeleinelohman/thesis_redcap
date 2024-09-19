@@ -16,6 +16,7 @@ library(terra)
 
 setwd("/Users/madelienelohman/Desktop/thesis_redcap")
 
+source("ppr_n_clust.R")
 
 load("map_dat.RData")
 load("combined_ppr.RData")
@@ -27,7 +28,8 @@ for(i in 1:ncol(all.new)){
   all.new[,i] <- as.numeric(unlist(all.new[,i]))
 }
 colnames(all.new)
-all.new <- all.new[,-c(1,7,10, 17)]
+#all.new <- all.new[,-c(1,7,10, 17)]
+all.new <- all.new[,-c(1,3:6, 8, 17)]
 colnames(all.new)
 
 
@@ -73,22 +75,34 @@ fviz_eig(pc.res, addlabels = TRUE) # Eigenvalues (What explains the most varianc
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run Redcap
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### How many clusters to use?
+min.clust = 20
+max.clust = 50
+pc.want = 1:6
+## Scoring
+# "S_Dbw"
+# "Calinski_Harabasz"
+# "Davies_Bouldin"
+
+test <- num.clust(counties.ppr, pc.res, min.clust, max.clust, pc.want, 
+                     "Davies_Bouldin")
+print(test["rbsste.plot"])
+print(test["index.plot"])
+n.clust = test$want
+
+
 ### Put first 3 PCs into data frame and combine with geographic data
-dat <- pc.res$x[,1:4]
+dat <- pc.res$x[,pc.want]
 dat <- cbind(counties.ppr, dat)
 
-### Number of clusters to create
-n.clust = 30
-
 ### Neighborhood weight matrices
-queen_w <- queen_weights(dat) 
+rook_w <- rook_weights(dat) 
 
 ### Specific data values we want
 data <- dat[,grep("PC",colnames(dat))] 
 
-
 ### Run Redcap!!
-cr <- redcap(n.clust, queen_w, data, "fullorder-completelinkage") 
+cr <- redcap(n.clust, rook_w, data, "fullorder-completelinkage") 
 cr
 
 #~~~~~~~~~~~~~~~~~~
@@ -119,14 +133,14 @@ ggplot(new) +
   theme_classic() +
   theme(legend.position="none")
 
-ggplot(new) +
-  geom_sf(aes(fill=pred))+
-  xlim(st_bbox(grd2)[c(1,3)]) + ylim(st_bbox(grd2)[c(2, 4)]) +
-  geom_sf(data=ppr_states, fill=NA, color="grey50", size=0.25) +
-  geom_sf(data=rels.n, size=0.85) +
-  scale_fill_manual(values=cols, aesthetics="fill") +
-  theme_classic() +
-  theme(legend.position="none")
+# ggplot(new) +
+#   geom_sf(aes(fill=pred))+
+#   xlim(st_bbox(grd2)[c(1,3)]) + ylim(st_bbox(grd2)[c(2, 4)]) +
+#   geom_sf(data=ppr_states, fill=NA, color="grey50", size=0.25) +
+#   geom_sf(data=rels.n, size=0.85) +
+#   scale_fill_manual(values=cols, aesthetics="fill") +
+#   theme_classic() +
+#   theme(legend.position="none")
 
 
 save.image(file="pca_res.RData")
