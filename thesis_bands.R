@@ -120,9 +120,8 @@ rels <- rels %>%
 #   geom_sf()
 
 rels.n <- rels %>%
-  group_by(geometry, id, BANDING_YEAR) %>%
+  group_by(id, BANDING_YEAR) %>%
   summarize(n = n())
-
 
 # ggplot(rels.n, aes(color=n)) +
 #   geom_sf()

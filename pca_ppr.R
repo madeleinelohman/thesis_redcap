@@ -35,7 +35,7 @@ colnames(all.new)
 # Run PCA
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ### PCA
-pc.res <- prcomp(~., data=all.new, scale. = TRUE)
+pc.res <- prcomp(~., data=all.new, scale.=TRUE, center=T)
 
 ### Look at summary
 summ <- summary(pc.res)
@@ -74,11 +74,11 @@ fviz_eig(pc.res, addlabels = TRUE) # Eigenvalues (What explains the most varianc
 # Run Redcap
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ### Put first 3 PCs into data frame and combine with geographic data
-dat <- pc.res$x[,1:5]
+dat <- pc.res$x[,1:4]
 dat <- cbind(counties.ppr, dat)
 
 ### Number of clusters to create
-n.clust = 20
+n.clust = 30
 
 ### Neighborhood weight matrices
 queen_w <- queen_weights(dat) 
@@ -127,5 +127,8 @@ ggplot(new) +
   scale_fill_manual(values=cols, aesthetics="fill") +
   theme_classic() +
   theme(legend.position="none")
+
+
+save.image(file="pca_res.RData")
 
 
