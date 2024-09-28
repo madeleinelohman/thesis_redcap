@@ -13,6 +13,7 @@ library(rgeoda)
 library(sf)
 library(tidyverse)
 library(terra)
+library(units)
 
 setwd("/Users/madelienelohman/Desktop/thesis_redcap")
 
@@ -35,7 +36,7 @@ all.new <- all.new[,-c(1,3:8, 17)]
 # all.new <- all.new[,-c(1, 8, 10, 17)]
 # all.new <- all.new[,-c(1, 8:10, 17)]
 # all.new <- all.new[,-c(9)]
-
+colnames(all.new)
 
 states <- unique(counties.ppr$STATE_NAME)
 counties.ppr$state_id <- NA
@@ -98,13 +99,18 @@ fviz_eig(pc.res, addlabels = TRUE) # Eigenvalues (What explains the most varianc
 # Run Redcap
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ### How to bound the clusters
-counties.ppr$area <- as.numeric(st_area(counties.ppr))
+counties.ppr$area <- st_area(counties.ppr)
+counties.ppr$area <- as.numeric(set_units(counties.ppr$area, km^2))
 bound_vals <- counties.ppr["area"]
-min_bound <- 1*10^10
+min_bound <- 3500
+
+# counties.ppr$area <- 1/nrow(counties.ppr)
+# bound_vals <- counties.ppr["area"]
+# min_bound <- 0.008
 
 ### How many clusters to use?
 min.clust = 30
-max.clust = 120
+max.clust = 75
 pc.want = 1:5
 ## Scoring
 # "S_Dbw"
@@ -114,7 +120,7 @@ pc.want = 1:5
 
 test <- num.clust(counties.ppr, pc.res, min.clust, max.clust, pc.want,
                   "SD_Scat", bound_vals, min_bound, states2)
-print(test["rbsste.plot"])
+print(test["rs.plot"])
 print(test["index.plot"])
 n.clust = test$want
 
@@ -132,7 +138,8 @@ data <- cbind(states2, data)
 data <- st_drop_geometry(data)
 
 ### Run Redcap!!
-cr <- redcap(n.clust, rook_w, data, "fullorder-completelinkage", scale_method="raw") 
+cr <- redcap(n.clust, rook_w, data, "fullorder-completelinkage", scale_method="raw",
+             bound_vals, min_bound) 
 cr
 
 #~~~~~~~~~~~~~~~~~~

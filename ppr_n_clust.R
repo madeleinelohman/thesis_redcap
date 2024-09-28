@@ -1,8 +1,4 @@
-min.clust=30
-max.clust=100
-index="S_Dbw"
-pc.want=1:5
-df=counties.ppr
+
 
 num.clust <- function(df, pc.res, min.clust, max.clust, pc.want, index, bound_vals, 
                       bound_min, states2){
@@ -14,7 +10,7 @@ num.clust <- function(df, pc.res, min.clust, max.clust, pc.want, index, bound_va
   dat <- dat[,c(pcs, "geometry")]
   
   ### Calculate neighborhood matrices
-  rook_w <- queen_weights(dat) 
+  rook_w <- rook_weights(dat) 
   
   ### Specific data values we want
   data <- dat[pcs] %>%
@@ -22,20 +18,20 @@ num.clust <- function(df, pc.res, min.clust, max.clust, pc.want, index, bound_va
   data.eval <- cbind(states2, data)
   
   ### Create an empty dataframe to figure out ideal number of clusters
-  eval <- data.frame(clusters=min.clust:max.clust, RBTSSE=NA, Index=NA)
+  eval <- data.frame(clusters=min.clust:max.clust, RS=NA, Index=NA)
   
   for(i in min.clust:max.clust){
     cr_q <- redcap(i, rook_w, data.eval, "fullorder-completelinkage", 
                    scale_method="raw",
                    bound_vals, min_bound)
-    eval$RBTSSE[i-(min.clust-1)] <- cr_q$`The ratio of between to total sum of squares`
+    eval$RS[i-(min.clust-1)] <- cr_q$`The ratio of between to total sum of squares`
     eval$Index[i-(min.clust-1)] <- unlist(intCriteria(as.matrix(data.eval), as.vector(as.integer(cr_q$Clusters)), crit=index))
   }
   
-  RBTSSE <- ggplot(eval, aes(x=clusters, y=RBTSSE)) +
+  RS <- ggplot(eval, aes(x=clusters, y=RS)) +
     geom_line() +
     theme_classic() +
-    labs(x='Clusters', y="Goodness of classification (RBTSSE)") 
+    labs(x='Clusters', y="Goodness of classification (RS)") 
   
   INDEX <- ggplot(eval, aes(x=clusters, y=Index)) +
     geom_line() +
@@ -46,7 +42,7 @@ num.clust <- function(df, pc.res, min.clust, max.clust, pc.want, index, bound_va
   
   n.clust.want <- eval[best.want, "clusters"]
   
-  return(list(eval=eval, want=n.clust.want, rbsste.plot=RBTSSE,
+  return(list(eval=eval, want=n.clust.want, rs.plot=RS,
               index.plot=INDEX))
 }
 
